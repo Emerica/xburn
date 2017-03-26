@@ -33,9 +33,9 @@ def loadImage(file):
         .convert("L", colors=args.colors) \
         .transpose(Image.ROTATE_180) \
         .transpose(Image.FLIP_LEFT_RIGHT) \
-        .save("workfile.jpg")
+        .save(args.output+".gcode.jpg")
     #Save temp, TODO: do without writing file? tired.
-    img = Image.open("workfile.jpg")
+    img = Image.open(args.output+".gcode.jpg")
     #img.show()
     imgarr = numpy.array(img)
     return imgarr
@@ -52,9 +52,13 @@ def laserOn(power):
     lines.append("S" + str(power) + " " + laserOnCmd)
     laser = True
 
+#TODO: config profiles so you don't have to mess around.....
+#SERIOUSLY! ^^^^^^^
+
 parser = argparse.ArgumentParser()
 parser.add_argument('file', help='image file name')
 parser.add_argument('width', type=int, help='Output width in MM (ish), FIX ME')
+
 #Versioning
 parser.add_argument('-v', '--version', action='version', version=version )
 #TODO: arguments and profiles.....
@@ -65,6 +69,18 @@ parser.add_argument('-xd', '--xdensity',  type=int, default=3,
     help='Pixels per MM in X direction, default 3')
 parser.add_argument('-yd', '--ydensity',  type=int, default=3,
     help='Pixels per MM Y direction, default 3')
+parser.add_argument('-sr', '--skiprate',  type=int, default=3000,
+    help='Moving Feed Rate')
+parser.add_argument('-br', '--burnrate',  type=int, default=800,
+    help='Burning Feed Rate')
+parser.add_argument('-st', '--steps',  type=int, default=255,
+    help='Laser PWM Steps')
+parser.add_argument('-hp', '--highpower',  type=int, default=12000,
+    help='Laser Max Power PWM VAlUE')
+parser.add_argument('-lp', '--lowpower',  type=int, default=0,
+    help='Laser Min Power PWM VAlUE')
+parser.add_argument('-o', '--output',  default="workfile",
+        help='Outfile name prefix')
 
 #Check the arguments
 args = parser.parse_args()
@@ -75,51 +91,29 @@ if not (args.file or args.colors):
     #Exit out with no action message
     parser.error('No action requested')
 
-#TODO: config profiles so you don't have to mess around.....
-#SERIOUSLY! ^^^^^^^
 
-skipSpeed = 3000 #FEEDRATE ON WHITE
-burnSpeed = 800 #FEEDRATE WHILE BURNING
-laserMax = 12000 #MAX LASER PWM VALUE
-laserMin = math.ceil(12000/255)
+if args.lowpower == 0:
+    args.lowpower = math.ceil(args.highpower/args.steps)
 
 #Do all the things
-if args.file :
-
+if args.file:
     #Load a image file to array
     arr = loadImage(args.file)
-
-    #TODO: make it possible to scale the image, so final output dimensions are
-    # known, which might not be easy considering the chunking going on below.
-
-
-    width=len(arr[0])
-    height=len(arr)
-    print "Image width: " + str(width)
-    print "Image height: " + str(height)
-
-    #1mm per pixel leaves some gap, once the above TODO is looked into, this
-    # would become a varible setting,.
-    scaley = 0.4
-    scalex = 0.4
-
+    scaley = 1/args.ydensity
+    scalex = 1/args.xdensity
     #Create a list to store the output gcode lines
     lines = []
-
     #Y position
     yp=0
-
     #Turn the laser off
     laserOff()
-
     #Work in MM
     lines.append("G21")
-
     #Loop over the list
     #TODO: get to end of line and reverse, saving time going back to x0 takes.
     for y in arr:
         #Go the start of this line
-        lines.append("G0 X0 Y" + str(yp*scaley) + " F" + str(skipSpeed))
+        lines.append("G0 X0 Y" + str(round(yp*scaley, 3)) + " F" + str(args.skiprate))
         #reset the x postion
         xp = 0
         #reset the lastxp position
@@ -139,16 +133,16 @@ if args.file :
                 if xp > 0 and lastxp == xp:
                     #Skip ahead with the laser off
                     laserOff()
-                    lines.append("G0 X" + str(xp*scalex) + " F" + str(skipSpeed))
+                    lines.append("G0 X" + str(round(xp*scalex, 3)) + " F" + str(args.skiprate))
                 #Turn on the laser
-                laserOn( math.ceil( laserMax-(value*laserMin) ) )
+                laserOn( math.ceil( args.highpower - (value * args.lowpower ) ) )
                 #Burn the segment
-                lines.append("G1 X" + str((xp+size)*scalex) + " F" + str(burnSpeed))
+                lines.append("G1 X" + str(round((xp+size)*scalex,3)) + " F" + str(args.burnrate))
             else:
                 #Turn off the laser
                 laserOff()
                 #skip the white
-                lines.append("G0 X" + str((xp+size)*scalex) + " F" + str(skipSpeed))
+                lines.append("G0 X" + str(round((xp+size)*scalex,3)) + " F" + str(args.skiprate))
             #track x position
             lastxp = xp
             #Increment position
@@ -157,5 +151,5 @@ if args.file :
         laserOff()
         yp = yp + 1
     #TODO: Output file name etc.
-    f = open('workfile.gcode', 'w')
+    f = open(args.output+'.gcode', 'w')
     f.write("\n".join(lines))
