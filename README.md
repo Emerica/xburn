@@ -15,10 +15,10 @@ cd xburn
 pip install -r requirements.txt
 chmod +x cli.py
 ./cli.py -h
-
 usage: cli.py [-h] [-v] [-c COLORS] [-xd XDENSITY] [-yd YDENSITY]
               [-sr SKIPRATE] [-br BURNRATE] [-st STEPS] [-hp HIGHPOWER]
-              [-lp LOWPOWER] [-o OUTPUT]
+              [-lp LOWPOWER] [-on LASERON] [-off LASEROFF] [-mod MODIFIER]
+              [-o OUTPUT] [-d]
               file width
 
 positional arguments:
@@ -44,9 +44,15 @@ optional arguments:
                         Laser Max Power PWM VAlUE
   -lp LOWPOWER, --lowpower LOWPOWER
                         Laser Min Power PWM VAlUE
+  -on LASERON, --laseron LASERON
+                        Laser ON Gcode Command default: M3
+  -off LASEROFF, --laseroff LASEROFF
+                        Laser Off Gcode Command default: M5
+  -mod MODIFIER, --modifier MODIFIER
+                        Laser Power Modifier, defaults to Spindle Speed (S)
   -o OUTPUT, --output OUTPUT
                         Outfile name prefix
-
+  -d, --debug           Turns on Debugging
 ```
 
 Output ~100mm wide image
