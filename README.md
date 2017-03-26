@@ -12,7 +12,7 @@ python, pil?, numpy?
 ```
 git clone https://github.com/Emerica/xburn.git
 cd xburn
-pip install -r requirments.txt  (TODO)
+pip install -r requirements.txt  (TODO)
 chmod +x cli.py
 ./cli.py -h
 
