@@ -19,8 +19,24 @@ def loadArray(arr):
     im = Image.fromarray(arr)
 
 def loadImage(file):
-    #NOTE: Smoothed to 16 shades
-    img = Image.open(file).convert("L", colors=16)
+    #Open Source
+    img = Image.open(file)
+    #aspect
+    height = args.width/(img.size[0]/img.size[1])
+    #This resize is close
+    #Rotated and flipped to look proper
+    resize = (
+        int(math.floor(args.xdensity * args.width)),
+        int(math.floor(args.ydensity * height))
+        )
+    img.resize(resize, Image.LANCZOS) \
+        .convert("L", colors=args.colors) \
+        .transpose(Image.ROTATE_180) \
+        .transpose(Image.FLIP_LEFT_RIGHT) \
+        .save("workfile.jpg")
+    #Save temp, TODO: do without writing file? tired.
+    img = Image.open("workfile.jpg")
+    #img.show()
     imgarr = numpy.array(img)
     return imgarr
 
@@ -38,16 +54,22 @@ def laserOn(power):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('file', help='image file name')
+parser.add_argument('width', type=int, help='Output width in MM (ish), FIX ME')
 #Versioning
 parser.add_argument('-v', '--version', action='version', version=version )
 #TODO: arguments and profiles.....
 #parser.add_argument('-s', '--size',  type=float, help='pixelsize')
-
+parser.add_argument('-c', '--colors',  type=int, default=16,
+    help='Number of shades, default 16')
+parser.add_argument('-xd', '--xdensity',  type=int, default=3,
+    help='Pixels per MM in X direction, default 3')
+parser.add_argument('-yd', '--ydensity',  type=int, default=3,
+    help='Pixels per MM Y direction, default 3')
 
 #Check the arguments
 args = parser.parse_args()
 #Make sure at least one option is chosen
-if not (args.file):
+if not (args.file or args.colors):
     #Print help
     parser.print_help()
     #Exit out with no action message
