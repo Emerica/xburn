@@ -20,7 +20,7 @@ def loadArray(arr):
 
 def loadImage(file):
     #NOTE: Smoothed to 16 shades
-    img = Image.open(args.file).convert("L", colors=16)
+    img = Image.open(file).convert("L", colors=16)
     imgarr = numpy.array(img)
     return imgarr
 
