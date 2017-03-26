@@ -10,10 +10,8 @@ except ImportError:
 
 from itertools import groupby
 from pprint import pprint
-version = "0.1"
+version = "0.2"
 laser = True
-laserOffCmd = "M5"
-laserOnCmd = "M3"
 
 def loadArray(arr):
     im = Image.fromarray(arr)
@@ -43,13 +41,13 @@ def loadImage(file):
 def laserOff():
     global laser
     if laser:
-        lines.append(laserOffCmd)
+        lines.append(args.laseroff)
         laser = False
 
 def laserOn(power):
     global laser
     #if not laser:
-    lines.append("S" + str(power) + " " + laserOnCmd)
+    lines.append(args.modifier + str(power) + " " + args.laseron)
     laser = True
 
 #TODO: config profiles so you don't have to mess around.....
@@ -79,9 +77,16 @@ parser.add_argument('-hp', '--highpower',  type=int, default=12000,
     help='Laser Max Power PWM VAlUE')
 parser.add_argument('-lp', '--lowpower',  type=int, default=0,
     help='Laser Min Power PWM VAlUE')
+parser.add_argument('-on', '--laseron', default="M3",
+    help='Laser ON Gcode Command default: M3')
+parser.add_argument('-off', '--laseroff', default="M5",
+    help='Laser Off Gcode Command default: M5')
+parser.add_argument('-mod', '--modifier', default="S",
+    help='Laser Power Modifier, defaults to Spindle Speed (S)')
 parser.add_argument('-o', '--output',  default="workfile",
         help='Outfile name prefix')
-
+parser.add_argument('-d', '--debug', action='store_true',
+    help='Turns on Debugging')
 #Check the arguments
 args = parser.parse_args()
 #Make sure at least one option is chosen
@@ -94,6 +99,8 @@ if not (args.file or args.colors):
 
 if args.lowpower == 0:
     args.lowpower = math.ceil(args.highpower/args.steps)
+    if args.debug:
+        print "Low power set to: " + str(args.lowpower)
 
 #Do all the things
 if args.file:
