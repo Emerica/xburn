@@ -19,7 +19,8 @@ def loadArray(arr):
     im = Image.fromarray(arr)
 
 def loadImage(file):
-    img = Image.open(args.file).convert("L")
+    #NOTE: Smoothed to 16 shades
+    img = Image.open(args.file).convert("L", colors=16)
     imgarr = numpy.array(img)
     return imgarr
 
@@ -62,10 +63,6 @@ laserMin = math.ceil(12000/255)
 
 #Do all the things
 if args.file :
-
-    #TODO: Scale the greyscale colors to say... 16 instead of 255
-    # "smoothing" , should also burn nicer/have less code in output.
-
 
     #Load a image file to array
     arr = loadImage(args.file)
