@@ -100,9 +100,9 @@ parser.add_argument('-p', '--preview', action='store_true',
     help='Turns on Debugging')
 parser.add_argument('-d', '--debug', action='store_true',
     help='Turns on Debugging')
-
 #Check the arguments
 args = parser.parse_args()
+
 #Make sure at least one option is chosen
 if not (args.file or args.colors):
     #Print help
@@ -119,11 +119,13 @@ if args.lowpower == 0:
 #Do all the things
 if args.file:
     #Load a image file to array
+
     arr = loadImage(args.file)
     scaley = 1/args.ydensity
     scalex = 1/args.xdensity
     #Create a list to store the output gcode lines
     lines = []
+    lines.append(";Xburn: " + str(args))
     #Y position
     yp=0
     #Turn the laser off
@@ -132,6 +134,7 @@ if args.file:
         prv = Image.new( 'RGB', (len(arr[0]),len(arr)), "red") # create a new black image
         pixels = prv.load() # create the pixel map
     #Work in MM
+
     lines.append("G21")
     #Loop over the list
     #TODO: get to end of line and reverse, saving time going back to x0 takes.
