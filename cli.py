@@ -142,10 +142,18 @@ if args.file:
     #Loop over the list
     #TODO: get to end of line and reverse, saving time going back to x0 takes.
     for y in arr:
-        #Go the start of this line
-        lines.append("G0 X0 Y" + str(round(yp*scaley, 3)) + " F" + str(args.skiprate))
-        #reset the x postion
-        xp = 0
+        #If we have an even number for a y axis line
+        if yp % 2 != 0:
+            #Direction is reversed, set xp to the end
+            xp = len(y) - 1
+            #Revese the values of y
+            y = list(reversed(y))
+            rev = True
+        else:
+            xp = 0
+            rev = False
+
+        start = False
         #reset the lastxp position
         lastxp = 0
         #Group pixels by value into a new list
@@ -159,33 +167,43 @@ if args.file:
             #print items
             #Make sure this isn't WHITE or 255
             if value < args.whitevalue:
+                if start == False:
+                    #Go the start of this line, the first place with a value
+                    lines.append("G0 X"+str(round(xp*scaley, 3))+" Y" +
+                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate) +
+                        ";Start line")
+                    start = True
                 if args.preview:
-                    pvx=0
+                    pvx = len(items)-1 if rev else 0
+
                     for item in items:
-                        #print  str(item) + " - " + str(yp) + " - "
-                        pixels[xp+pvx,yp] = (item, item, item)
-                        pvx = pvx + 1
+                        pix = xp-pvx if rev else xp+pvx
+                        pixels[pix,yp] = (item, item, item)
+                        pvx = pvx-1 if rev else pvx+1
                 #If we need to skip ahead
-                if xp > 0 and lastxp == xp:
+                if xp > 0  and xp < len(y) and lastxp == xp:
                     #Skip ahead with the laser off
                     laserOff()
                     lines.append("G0 X" + str(round(xp*scalex, 3)) +
-                        " F" + str(args.skiprate))
+                        " F" + str(args.skiprate) + ";skip ahead")
                 #Turn on the laser
                 laserOn(math.ceil(args.highpower-(value*args.lowpower)))
                 #Burn the segment
-                lines.append("G1 X" + str(round((xp+size)*scalex,3)) +
+                goto = xp - size if rev else xp + size
+                lines.append("G1 X" + str(round((goto)*scalex,3)) +
                     " F" + str(args.burnrate))
             else:
                 #Turn off the laser
                 laserOff()
                 #skip the white
-                lines.append("G0 X" + str(round((xp+size)*scalex,3)) +
-                    " F" + str(args.skiprate))
+                if start and "G0" not in lines[len(lines)-1]:
+                    goto = xp - size if rev else xp + size
+                    lines.append("G0 X" + str(round((goto)*scalex,3)) +
+                        " F" + str(args.skiprate) + "; skip ahead.....")
             #track x position
             lastxp = xp
             #Increment position
-            xp = xp + size
+            xp = xp - size if rev else xp + size
         #Turn the laser off
         laserOff()
         yp = yp + 1
