@@ -50,6 +50,15 @@ def laserOn(power):
     lines.append(args.modifier + str(power) + " " + args.laseron)
     laser = True
 
+#creates a 255x20 black to white gradient for testing settings
+def gradientTest():
+    img = Image.new( 'RGB', (255,20), "black") # create a new black image
+    pixels = img.load() # create the pixel map
+    for i in range(img.size[0]):    # for every pixel:
+        for j in range(img.size[1]):
+            pixels[i,j] = (i, i, i) # set the colour accordingly
+    img.save(args.output+".jpg")
+
 #TODO: config profiles so you don't have to mess around.....
 #SERIOUSLY! ^^^^^^^
 
@@ -85,8 +94,11 @@ parser.add_argument('-mod', '--modifier', default="S",
     help='Laser Power Modifier, defaults to Spindle Speed (S)')
 parser.add_argument('-o', '--output',  default="workfile",
         help='Outfile name prefix')
+parser.add_argument('-p', '--preview', action='store_true',
+    help='Turns on Debugging')
 parser.add_argument('-d', '--debug', action='store_true',
     help='Turns on Debugging')
+
 #Check the arguments
 args = parser.parse_args()
 #Make sure at least one option is chosen
@@ -114,6 +126,9 @@ if args.file:
     yp=0
     #Turn the laser off
     laserOff()
+    if args.preview:
+        prv = Image.new( 'RGB', (len(arr[0]),len(arr)), "red") # create a new black image
+        pixels = prv.load() # create the pixel map
     #Work in MM
     lines.append("G21")
     #Loop over the list
@@ -136,6 +151,12 @@ if args.file:
             #print items
             #Make sure this isn't WHITE or 255
             if value < 255:
+                if args.preview:
+                    pvx=0
+                    for item in items:
+                        #print  str(item) + " - " + str(yp) + " - "
+                        pixels[xp+pvx,yp] = (item, item, item)
+                        pvx = pvx + 1
                 #If we need to skip ahead
                 if xp > 0 and lastxp == xp:
                     #Skip ahead with the laser off
@@ -158,5 +179,8 @@ if args.file:
         laserOff()
         yp = yp + 1
     #TODO: Output file name etc.
+    if args.preview:
+        prv.transpose(Image.ROTATE_180).transpose(Image.FLIP_LEFT_RIGHT).show()
+        #prv.show()
     f = open(args.output+'.gcode', 'w')
     f.write("\n".join(lines))
