@@ -15,10 +15,10 @@ cd xburn
 pip install -r requirements.txt
 chmod +x cli.py
 ./cli.py -h
-usage: cli.py [-h] [-v] [-c COLORS] [-xd XDENSITY] [-yd YDENSITY]
-              [-sr SKIPRATE] [-br BURNRATE] [-st STEPS] [-hp HIGHPOWER]
-              [-lp LOWPOWER] [-on LASERON] [-off LASEROFF] [-mod MODIFIER]
-              [-o OUTPUT] [-d]
+usage: cli.py [-h] [-v] [-c COLORS] [-wv WHITEVALUE] [-xd XDENSITY]
+              [-yd YDENSITY] [-sr SKIPRATE] [-br BURNRATE] [-st STEPS]
+              [-hp HIGHPOWER] [-lp LOWPOWER] [-on LASERON] [-off LASEROFF]
+              [-mod MODIFIER] [-o OUTPUT] [-p] [-tp] [-d]
               file width
 
 positional arguments:
@@ -30,6 +30,9 @@ optional arguments:
   -v, --version         show program's version number and exit
   -c COLORS, --colors COLORS
                         Number of shades, default 16
+  -wv WHITEVALUE, --whitevalue WHITEVALUE
+                        White value, defaults to 255, anything larger than
+                        this is skipped.
   -xd XDENSITY, --xdensity XDENSITY
                         Pixels per MM in X direction, default 3
   -yd YDENSITY, --ydensity YDENSITY
@@ -52,13 +55,25 @@ optional arguments:
                         Laser Power Modifier, defaults to Spindle Speed (S)
   -o OUTPUT, --output OUTPUT
                         Outfile name prefix
+  -p, --preview         Preview burn output, red is skipped over.
+  -tp, --testpattern    Create a test pattern. Use ./cli.py test 100 -tp -p -o
+                        testfile .... (for now)
   -d, --debug           Turns on Debugging
 ```
 
-Output ~100mm wide image
+Output ~100mm wide image with preview enabled
 
 
 ```
-./cli.py filename.jpg 100 -o filename
+./cli.py filename.jpg 100 -o filename -p
 cat filename.gcode
+```
+
+
+Create a gradient test pattern for tuning power levels
+
+```
+./cli.py test 100 -o testpattern -p [non default settings here]
+cat testpattern.gcode
+
 ```
