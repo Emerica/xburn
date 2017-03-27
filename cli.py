@@ -10,7 +10,7 @@ except ImportError:
 
 from itertools import groupby
 from pprint import pprint
-version = "0.2"
+version = "0.3"
 laser = True
 
 def loadArray(arr):
@@ -94,11 +94,11 @@ parser.add_argument('-off', '--laseroff', default="M5",
 parser.add_argument('-mod', '--modifier', default="S",
     help='Laser Power Modifier, defaults to Spindle Speed (S)')
 parser.add_argument('-o', '--output',  default="workfile",
-        help='Outfile name prefix')
+    help='Outfile name prefix')
 parser.add_argument('-p', '--preview', action='store_true',
     help='Preview burn output, red is skipped over.')
 parser.add_argument('-tp', '--testpattern', action='store_true',
-    help='Create a test pattern. Use ./cli.py test 100 -tp -p -o testfile .... (for now)')
+    help='Create a test pattern. Use ./cli.py test 100 -tp -p -o testfile')
 parser.add_argument('-d', '--debug', action='store_true',
     help='Turns on Debugging')
 
@@ -135,7 +135,7 @@ if args.file:
     #Turn the laser off
     laserOff()
     if args.preview:
-        prv = Image.new( 'RGB', (len(arr[0]),len(arr)), "red") # create a new black image
+        prv = Image.new( 'RGB', (len(arr[0]),len(arr)), "red")
         pixels = prv.load() # create the pixel map
     #Work in MM
     lines.append("G21")
@@ -169,16 +169,19 @@ if args.file:
                 if xp > 0 and lastxp == xp:
                     #Skip ahead with the laser off
                     laserOff()
-                    lines.append("G0 X" + str(round(xp*scalex, 3)) + " F" + str(args.skiprate))
+                    lines.append("G0 X" + str(round(xp*scalex, 3)) +
+                        " F" + str(args.skiprate))
                 #Turn on the laser
-                laserOn( math.ceil( args.highpower - (value * args.lowpower ) ) )
+                laserOn(math.ceil(args.highpower-(value*args.lowpower)))
                 #Burn the segment
-                lines.append("G1 X" + str(round((xp+size)*scalex,3)) + " F" + str(args.burnrate))
+                lines.append("G1 X" + str(round((xp+size)*scalex,3)) +
+                    " F" + str(args.burnrate))
             else:
                 #Turn off the laser
                 laserOff()
                 #skip the white
-                lines.append("G0 X" + str(round((xp+size)*scalex,3)) + " F" + str(args.skiprate))
+                lines.append("G0 X" + str(round((xp+size)*scalex,3)) +
+                    " F" + str(args.skiprate))
             #track x position
             lastxp = xp
             #Increment position
@@ -186,9 +189,9 @@ if args.file:
         #Turn the laser off
         laserOff()
         yp = yp + 1
-    #TODO: Output file name etc.
+    #Show a preview if enabled
     if args.preview:
         prv.transpose(Image.ROTATE_180).transpose(Image.FLIP_LEFT_RIGHT).show()
-        #prv.show()
+    #Output the gcode file
     f = open(args.output+'.gcode', 'w')
     f.write("\n".join(lines))
