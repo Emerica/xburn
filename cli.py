@@ -72,6 +72,8 @@ parser.add_argument('-v', '--version', action='version', version=version )
 #parser.add_argument('-s', '--size',  type=float, help='pixelsize')
 parser.add_argument('-c', '--colors',  type=int, default=16,
     help='Number of shades, default 16')
+parser.add_argument('-wv', '--whitevalue',  type=int, default=255,
+    help='White value, defaults to 255, anything larger than this is skipped.')
 parser.add_argument('-xd', '--xdensity',  type=int, default=3,
     help='Pixels per MM in X direction, default 3')
 parser.add_argument('-yd', '--ydensity',  type=int, default=3,
@@ -150,7 +152,7 @@ if args.file:
             value = items[0]
             #print items
             #Make sure this isn't WHITE or 255
-            if value < 255:
+            if value < args.whitevalue:
                 if args.preview:
                     pvx=0
                     for item in items:
