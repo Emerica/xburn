@@ -52,12 +52,12 @@ def laserOn(power):
 
 #creates a 255x20 black to white gradient for testing settings
 def gradientTest():
-    img = Image.new( 'RGB', (255,20), "black") # create a new black image
-    pixels = img.load() # create the pixel map
-    for i in range(img.size[0]):    # for every pixel:
-        for j in range(img.size[1]):
+    test = Image.new( 'RGB', (255,20), "black") # create a new black image
+    pixels = test.load() # create the pixel map
+    for i in range(test.size[0]):    # for every pixel:
+        for j in range(test.size[1]):
             pixels[i,j] = (i, i, i) # set the colour accordingly
-    img.save(args.output+".jpg")
+    test.save("gradient_testpatten.jpg")
 
 #TODO: config profiles so you don't have to mess around.....
 #SERIOUSLY! ^^^^^^^
@@ -97,13 +97,16 @@ parser.add_argument('-o', '--output',  default="workfile",
         help='Outfile name prefix')
 parser.add_argument('-p', '--preview', action='store_true',
     help='Preview burn output, red is skipped over.')
+parser.add_argument('-tp', '--testpattern', action='store_true',
+    help='Create a test pattern. Use ./cli.py test 100 -tp -p -o testfile .... (for now)')
 parser.add_argument('-d', '--debug', action='store_true',
     help='Turns on Debugging')
+
 #Check the arguments
 args = parser.parse_args()
 
 #Make sure at least one option is chosen
-if not (args.file or args.colors):
+if not (args.file or args.testpattern):
     #Print help
     parser.print_help()
     #Exit out with no action message
@@ -113,6 +116,10 @@ if args.lowpower == 0:
     args.lowpower = math.ceil(args.highpower/args.steps)
     if args.debug:
         print "Low power set to: " + str(args.lowpower)
+
+if args.testpattern:
+    gradientTest()
+    args.file = "gradient_testpatten.jpg"
 
 #Do all the things
 if args.file:
