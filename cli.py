@@ -258,8 +258,8 @@ if args.file:
         yp = yp + 1
         #Turn the laser off
         laserOff()
-        #Go to zero
-        appendGcode("G00 X0 Y0 F" + str(args.skiprate))
+    #Go to zero
+    appendGcode("G00 X0 Y0 F" + str(args.skiprate))
     #Show a preview if enabled
     if args.preview:
         prv.transpose(Image.ROTATE_180).transpose(Image.FLIP_LEFT_RIGHT).show()
