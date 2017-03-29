@@ -6,6 +6,8 @@ Create gcode files for a laser mounted to a shapeoko3 using stock firmware
 -Skip's White Areas
 -Burns in both directions, reversing every other line
 
+[https://i.ytimg.com/vi_webp/BWzQP15pxRQ/maxresdefault.webp](https://www.youtube.com/edit?o=U&video_id=BWzQP15pxRQ)
+
 -TODO - FIX Shades Option. Howto
 
 ### Prerequisites
