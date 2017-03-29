@@ -111,8 +111,6 @@ def appendGcode(line):
         lines.append(line)
 
 
-
-
 #TODO: config profiles so you don't have to mess around.....
 #SERIOUSLY! ^^^^^^^
 parser = argparse.ArgumentParser()
