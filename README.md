@@ -7,7 +7,7 @@ Create gcode files for a laser mounted to a shapeoko3 using stock firmware
 -Burns in both directions, reversing every other line
 
 <p align="center">
-  <a href="https://www.youtube.com/edit?o=U&video_id=BWzQP15pxRQ"
+  <a href="https://www.youtube.com/watch?video_id=BWzQP15pxRQ"
   target="_blank"><img src="https://i.ytimg.com/vi_webp/BWzQP15pxRQ/maxresdefault.webp"
   width="350"/>
   </a>
