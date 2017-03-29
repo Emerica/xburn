@@ -10,8 +10,7 @@ except ImportError:
 
 from itertools import groupby
 from pprint import pprint
-version = "0.3"
-laser = True
+version = "0.5"
 
 def loadArray(arr):
     im = Image.fromarray(arr)
@@ -27,11 +26,43 @@ def loadImage(file):
         int(math.floor(args.xdensity * args.width)),
         int(math.floor(args.ydensity * height))
         )
-    img.resize(resize, Image.LANCZOS) \
-        .convert("L", colors=args.colors) \
-        .transpose(Image.ROTATE_180) \
-        .transpose(Image.FLIP_LEFT_RIGHT) \
-        .save(args.output+".gcode.jpg")
+    #TODO: make quantize work with a palette, better.
+    if args.palette:
+        if args.shades < 3:
+            palette = [
+                0,   0,   0,
+                255,   255, 255,
+            ] + [255, ] * 254 * 3
+        else:
+            palette = [0,   0,   0,]
+            steps = int(math.floor(256/(args.shades-1)))
+            for c in range(args.shades-2):
+                m = c+1
+                palette = palette + [steps*m,steps*m,steps*m]
+            palette = palette + [255, ] * (256-args.shades) * 3
+        pimage = Image.new("P", (1, 1), 0)
+        pimage.putpalette(palette)
+        if args.debug:
+            print "Number of shades:" + str(args.shades)
+            print "Number of steps:" + str(steps)
+            print palette
+        #.convert("L", palette=pimage) \
+        img.convert("L") \
+            .quantize(colors=args.shades, palette=pimage) \
+            .resize(resize, Image.LANCZOS) \
+            .transpose(Image.ROTATE_180) \
+            .transpose(Image.FLIP_LEFT_RIGHT) \
+            .save(args.output+".gcode.jpg")
+            #.show()
+    else:
+        if args.debug:
+            print "No palette"
+        img.convert("L") \
+            .resize(resize, Image.LANCZOS) \
+            .transpose(Image.ROTATE_180) \
+            .transpose(Image.FLIP_LEFT_RIGHT) \
+            .save(args.output+".gcode.jpg")
+            #.show()
     #Save temp, TODO: do without writing file? tired.
     img = Image.open(args.output+".gcode.jpg")
     #img.show()
@@ -39,16 +70,10 @@ def loadImage(file):
     return imgarr
 
 def laserOff():
-    global laser
-    if laser:
-        lines.append(args.laseroff)
-        laser = False
+    appendGcode(args.laseroff)
 
 def laserOn(power):
-    global laser
-    #if not laser:
-    lines.append(args.modifier + str(power) + " " + args.laseron)
-    laser = True
+    appendGcode(args.modifier + str(power) + " " + args.laseron)
 
 #creates a 255x20 black to white gradient for testing settings
 def gradientTest():
@@ -58,6 +83,34 @@ def gradientTest():
         for j in range(test.size[1]):
             pixels[i,j] = (i, i, i) # set the colour accordingly
     test.save("gradient_testpatten.jpg")
+
+
+        global lines
+    #Remove any duplicate commands...
+    #optimizing where possible.
+    numlines = len(lines)
+    prefix = line[:2]
+    if len(lines) > 0:
+        if line == lines[numlines-1]:
+            pass
+            #Duplicate gcode found. OMIT
+            #if args.debug:
+            #    print "OMIT DUPLICATE:"  + line
+        elif  prefix == lines[numlines-1][:2] and "Y" not in lines[numlines-1]:
+            lines[numlines-1] = line
+            #if args.debug:
+            #    print "OVERWRITE:"  + line
+        elif args.laseron in line and args.laseroff in lines[numlines-1]:
+            lines[numlines-1] = line
+            #if args.debug:
+            #    print "Keep laser on:"  + line
+        else:
+            lines.append(line)
+    else:
+        lines.append(line)
+
+
+
 
 #TODO: config profiles so you don't have to mess around.....
 #SERIOUSLY! ^^^^^^^
@@ -69,7 +122,9 @@ parser.add_argument('width', type=int, help='Output width in MM (ish), FIX ME')
 parser.add_argument('-v', '--version', action='version', version=version )
 #TODO: arguments and profiles.....
 #parser.add_argument('-s', '--size',  type=float, help='pixelsize')
-parser.add_argument('-c', '--colors',  type=int, default=16,
+parser.add_argument('-pa', '--palette', action='store_true',
+    help='Color Palette, use with shades option, needs work.')
+parser.add_argument('-s', '--shades',  type=int, default=16,
     help='Number of shades, default 16')
 parser.add_argument('-wv', '--whitevalue',  type=int, default=255,
     help='White value, defaults to 255, anything larger than this is skipped.')
@@ -129,7 +184,7 @@ if args.file:
     scalex = 1/args.xdensity
     #Create a list to store the output gcode lines
     lines = []
-    lines.append(";Xburn: " + str(args))
+    appendGcode(";Xburn: " + str(args))
     #Y position
     yp=0
     #Turn the laser off
@@ -138,7 +193,7 @@ if args.file:
         prv = Image.new( 'RGB', (len(arr[0]),len(arr)), "red")
         pixels = prv.load() # create the pixel map
     #Work in MM
-    lines.append("G21")
+    appendGcode("G21")
     #Loop over the list
     #TODO: get to end of line and reverse, saving time going back to x0 takes.
     for y in arr:
@@ -169,9 +224,8 @@ if args.file:
             if value < args.whitevalue:
                 if start == False:
                     #Go the start of this line, the first place with a value
-                    lines.append("G0 X"+str(round(xp*scaley, 3))+" Y" +
-                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate) +
-                        ";Start line")
+                    appendGcode("G0 X"+str(round(xp*scaley, 3))+" Y" +
+                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate))
                     start = True
                 if args.preview:
                     pvx = len(items)-1 if rev else 0
@@ -183,30 +237,29 @@ if args.file:
                 #If we need to skip ahead
                 if xp > 0  and xp < len(y) and lastxp == xp:
                     #Skip ahead with the laser off
-                    laserOff()
-                    lines.append("G0 X" + str(round(xp*scalex, 3)) +
-                        " F" + str(args.skiprate) + ";skip ahead")
+                    appendGcode("G0 X" + str(round(xp*scalex, 3)) +
+                        " F" + str(args.skiprate))
                 #Turn on the laser
                 laserOn(math.ceil(args.highpower-(value*args.lowpower)))
                 #Burn the segment
                 goto = xp - size if rev else xp + size
-                lines.append("G1 X" + str(round((goto)*scalex,3)) +
+                appendGcode("G1 X" + str(round((goto)*scalex,3)) +
                     " F" + str(args.burnrate))
-            else:
-                #Turn off the laser
                 laserOff()
+            else:
                 #skip the white
-                if start and "G0" not in lines[len(lines)-1]:
+                if xp > 0  and xp < len(y) and lastxp == xp:
                     goto = xp - size if rev else xp + size
-                    lines.append("G0 X" + str(round((goto)*scalex,3)) +
-                        " F" + str(args.skiprate) + "; skip ahead.....")
+                    appendGcode("G0 X" + str(round((goto)*scalex,3)) +
+                            " F" + str(args.skiprate) + "; skip ahead.....")
+
             #track x position
             lastxp = xp
             #Increment position
             xp = xp - size if rev else xp + size
+        yp = yp + 1
         #Turn the laser off
         laserOff()
-        yp = yp + 1
     #Show a preview if enabled
     if args.preview:
         prv.transpose(Image.ROTATE_180).transpose(Image.FLIP_LEFT_RIGHT).show()
