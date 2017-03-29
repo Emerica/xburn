@@ -3,6 +3,11 @@
 Python Command Line Tool
 Create gcode files for a laser mounted to a shapeoko3 using stock firmware
 
+-Skip's White Areas
+-Burns in both directions, reversing every other line
+
+-TODO - FIX Shades Option. Howto
+
 ### Prerequisites
 
 python, pil?, numpy?
@@ -15,7 +20,7 @@ cd xburn
 pip install -r requirements.txt
 chmod +x cli.py
 ./cli.py -h
-usage: cli.py [-h] [-v] [-c COLORS] [-wv WHITEVALUE] [-xd XDENSITY]
+usage: cli.py [-h] [-v] [-pa] [-s SHADES] [-wv WHITEVALUE] [-xd XDENSITY]
               [-yd YDENSITY] [-sr SKIPRATE] [-br BURNRATE] [-st STEPS]
               [-hp HIGHPOWER] [-lp LOWPOWER] [-on LASERON] [-off LASEROFF]
               [-mod MODIFIER] [-o OUTPUT] [-p] [-tp] [-d]
@@ -28,7 +33,8 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show program's version number and exit
-  -c COLORS, --colors COLORS
+  -pa, --palette        Color Palette, use with shades option, needs work.
+  -s SHADES, --shades SHADES
                         Number of shades, default 16
   -wv WHITEVALUE, --whitevalue WHITEVALUE
                         White value, defaults to 255, anything larger than
@@ -57,7 +63,7 @@ optional arguments:
                         Outfile name prefix
   -p, --preview         Preview burn output, red is skipped over.
   -tp, --testpattern    Create a test pattern. Use ./cli.py test 100 -tp -p -o
-                        testfile .... (for now)
+                        testfile
   -d, --debug           Turns on Debugging
 ```
 
@@ -73,7 +79,7 @@ cat filename.gcode
 Create a gradient test pattern for tuning power levels
 
 ```
-./cli.py test 100 -o testpattern -p [non default settings here]
+./cli.py test 100 -tp -o testpattern -p [non default settings here]
 cat testpattern.gcode
 
 ```
