@@ -196,7 +196,6 @@ if args.file:
     #Work in MM
     appendGcode("G21")
     #Loop over the list
-    #TODO: get to end of line and reverse, saving time going back to x0 takes.
     for y in arr:
         #If we have an even number for a y axis line
         if yp % 2 != 0:
@@ -220,26 +219,26 @@ if args.file:
             size = len(items)
             #grey Value in this chunk of the line
             value = items[0]
-            #print items
-            #Make sure this isn't WHITE or 255
+
+            #Make sure this group isn't above the whitevalue
             if value < args.whitevalue:
                 if start == False:
                     #Go the start of this line, the first place with a value
                     appendGcode("G0 X"+str(round(xp*scaley, 3))+" Y" +
                         str(round(yp*scaley, 3)) + " F" + str(args.skiprate))
                     start = True
+                #Create the preview
                 if args.preview:
                     pvx = len(items)-1 if rev else 0
-
                     for item in items:
                         pix = xp-pvx if rev else xp+pvx
                         pixels[pix,yp] = (item, item, item)
                         pvx = pvx-1 if rev else pvx+1
-                #If we need to skip ahead
-                if xp > 0  and xp < len(y) and lastxp == xp:
-                    #Skip ahead with the laser off
-                    appendGcode("G0 X" + str(round(xp*scalex, 3)) +
-                        " F" + str(args.skiprate))
+                #If we are not at the start of the line, on either side
+                #if xp > 0  and xp < len(y) and lastxp == xp:
+                #Skip ahead with the laser off
+                appendGcode("G0 X" + str(round(xp*scalex, 3)) +
+                    " F" + str(args.skiprate))
                 #Turn on the laser
                 laserOn(math.ceil(args.highpower-(value*args.lowpower)))
                 #Burn the segment
