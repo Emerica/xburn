@@ -85,7 +85,8 @@ def gradientTest():
     test.save("gradient_testpatten.jpg")
 
 
-        global lines
+def appendGcode(line):
+    global lines
     #Remove any duplicate commands...
     #optimizing where possible.
     numlines = len(lines)
