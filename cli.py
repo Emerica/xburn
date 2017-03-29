@@ -10,7 +10,7 @@ except ImportError:
 
 from itertools import groupby
 from pprint import pprint
-version = "0.5"
+version = "0.6"
 
 def loadArray(arr):
     im = Image.fromarray(arr)
@@ -110,6 +110,14 @@ def appendGcode(line):
     else:
         lines.append(line)
 
+#Set laser mode for grbl 1.1
+#Appears this should work? in practice?
+def laserMode(status):
+    if status == 1:
+        appendGcode("$38=1")
+    else:
+        appendGcode("$38=0")
+
 
 #TODO: config profiles so you don't have to mess around.....
 #SERIOUSLY! ^^^^^^^
@@ -151,6 +159,8 @@ parser.add_argument('-o', '--output',  default="workfile",
     help='Outfile name prefix')
 parser.add_argument('-p', '--preview', action='store_true',
     help='Preview burn output, red is skipped over.')
+parser.add_argument('-gr', '--grblver',  type=float, default=0.9,
+    help='Default Grbl version is 0.9')
 parser.add_argument('-tp', '--testpattern', action='store_true',
     help='Create a test pattern. Use ./cli.py test 100 -tp -p -o testfile')
 parser.add_argument('-d', '--debug', action='store_true',
@@ -186,6 +196,9 @@ if args.file:
     appendGcode(";Xburn: " + str(args))
     #Y position
     yp=0
+    #if the grbl version allows lasermode, enable it
+    if args.grblver > 0.9:
+        laserMode(1)
     #Turn the laser off
     laserOff()
     if args.preview:
@@ -205,7 +218,6 @@ if args.file:
         else:
             xp = 0
             rev = False
-
         start = False
         #reset the lastxp position
         lastxp = 0
@@ -217,13 +229,12 @@ if args.file:
             size = len(items)
             #grey Value in this chunk of the line
             value = items[0]
-
             #Make sure this group isn't above the whitevalue
             if value < args.whitevalue:
                 if start == False:
                     #Go the start of this line, the first place with a value
                     appendGcode("G0 X"+str(round(xp*scaley, 3))+" Y" +
-                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate)+ ";test1")
+                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate))
                     start = True
                 else:
                     appendGcode("G0 X" + str(round(xp*scalex, 3)) +
@@ -235,8 +246,6 @@ if args.file:
                         pix = xp-pvx if rev else xp+pvx
                         pixels[pix,yp] = (item, item, item)
                         pvx = pvx-1 if rev else pvx+1
-
-
                 #Turn on the laser
                 laserOn(math.ceil(args.highpower-(value*args.lowpower)))
                 #Burn the segment
@@ -249,8 +258,7 @@ if args.file:
                 if xp > 0  and xp < len(y) and lastxp == xp:
                     goto = xp - size if rev else xp + size
                     appendGcode("G0 X" + str(round((goto)*scalex,3)) +
-                            " F" + str(args.skiprate) + ";test2")
-
+                            " F" + str(args.skiprate))
             #track x position
             lastxp = xp
             #Increment position
@@ -260,6 +268,9 @@ if args.file:
         laserOff()
     #Go to zero
     appendGcode("G00 X0 Y0 F" + str(args.skiprate))
+    #if the grbl version allows lasermode, disable it
+    if args.grblver > 0.9:
+        laserMode(0)
     #Show a preview if enabled
     if args.preview:
         prv.transpose(Image.ROTATE_180).transpose(Image.FLIP_LEFT_RIGHT).show()
