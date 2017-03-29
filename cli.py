@@ -251,7 +251,7 @@ if args.file:
                 if xp > 0  and xp < len(y) and lastxp == xp:
                     goto = xp - size if rev else xp + size
                     appendGcode("G0 X" + str(round((goto)*scalex,3)) +
-                            " F" + str(args.skiprate) + "; skip ahead.....")
+                            " F" + str(args.skiprate))
 
             #track x position
             lastxp = xp
@@ -260,6 +260,8 @@ if args.file:
         yp = yp + 1
         #Turn the laser off
         laserOff()
+        #Go to zero
+        appendGcode("G00 X0 Y0 F" + str(args.skiprate))
     #Show a preview if enabled
     if args.preview:
         prv.transpose(Image.ROTATE_180).transpose(Image.FLIP_LEFT_RIGHT).show()
