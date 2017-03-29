@@ -223,8 +223,11 @@ if args.file:
                 if start == False:
                     #Go the start of this line, the first place with a value
                     appendGcode("G0 X"+str(round(xp*scaley, 3))+" Y" +
-                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate))
+                        str(round(yp*scaley, 3)) + " F" + str(args.skiprate)+ ";test1")
                     start = True
+                else:
+                    appendGcode("G0 X" + str(round(xp*scalex, 3)) +
+                            " F" + str(args.skiprate))
                 #Create the preview
                 if args.preview:
                     pvx = len(items)-1 if rev else 0
@@ -232,11 +235,8 @@ if args.file:
                         pix = xp-pvx if rev else xp+pvx
                         pixels[pix,yp] = (item, item, item)
                         pvx = pvx-1 if rev else pvx+1
-                #If we are not at the start of the line, on either side
-                #if xp > 0  and xp < len(y) and lastxp == xp:
-                #Skip ahead with the laser off
-                appendGcode("G0 X" + str(round(xp*scalex, 3)) +
-                    " F" + str(args.skiprate))
+
+
                 #Turn on the laser
                 laserOn(math.ceil(args.highpower-(value*args.lowpower)))
                 #Burn the segment
@@ -249,7 +249,7 @@ if args.file:
                 if xp > 0  and xp < len(y) and lastxp == xp:
                     goto = xp - size if rev else xp + size
                     appendGcode("G0 X" + str(round((goto)*scalex,3)) +
-                            " F" + str(args.skiprate))
+                            " F" + str(args.skiprate) + ";test2")
 
             #track x position
             lastxp = xp
