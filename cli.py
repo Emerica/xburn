@@ -23,8 +23,8 @@ def loadImage(file):
     #This resize is close
     #Rotated and flipped to look proper
     resize = (
-        int(math.floor(args.xdensity * args.width)),
-        int(math.floor(args.ydensity * height))
+        int(math.floor(args.density * args.width)),
+        int(math.floor(args.density * height))
         )
     #TODO: make quantize work with a palette, better.
     if args.palette:
@@ -135,10 +135,8 @@ parser.add_argument('-s', '--shades',  type=int, default=16,
     help='Number of shades, default 16')
 parser.add_argument('-wv', '--whitevalue',  type=int, default=255,
     help='White value, defaults to 255, anything larger than this is skipped.')
-parser.add_argument('-xd', '--xdensity',  type=int, default=3,
-    help='Pixels per MM in X direction, default 3')
-parser.add_argument('-yd', '--ydensity',  type=int, default=3,
-    help='Pixels per MM Y direction, default 3')
+parser.add_argument('-de', '--density',  type=float, default=2.0,
+    help='Pixels per MM, default 2.0')
 parser.add_argument('-sr', '--skiprate',  type=int, default=3000,
     help='Moving Feed Rate')
 parser.add_argument('-br', '--burnrate',  type=int, default=800,
@@ -189,8 +187,8 @@ if args.testpattern:
 if args.file:
     #Load a image file to array
     arr = loadImage(args.file)
-    scaley = 1/args.ydensity
-    scalex = 1/args.xdensity
+    scaley = 1/args.density
+    scalex = 1/args.density
     #Create a list to store the output gcode lines
     lines = []
     appendGcode(";Xburn: " + str(args))
@@ -247,7 +245,13 @@ if args.file:
                         pixels[pix,yp] = (item, item, item)
                         pvx = pvx-1 if rev else pvx+1
                 #Turn on the laser
-                laserOn(math.ceil(args.highpower-(value*args.lowpower)))
+                step = (args.highpower-args.lowpower)/args.steps
+                if args.debug:
+                    print "Step:" + str(step)
+                    print "Value:" + str(value)
+                    print "Steps:" + str(args.steps)
+                    print "Power:" + str(math.ceil((args.steps-value)*step))
+                laserOn(math.ceil((args.steps-value)*step))
                 #Burn the segment
                 goto = xp - size if rev else xp + size
                 appendGcode("G1 X" + str(round((goto)*scalex,3)) +
