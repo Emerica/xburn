@@ -10,7 +10,7 @@ except ImportError:
 
 from itertools import groupby
 from pprint import pprint
-version = "0.6"
+version = "0.7"
 
 def loadArray(arr):
     im = Image.fromarray(arr)
@@ -246,11 +246,6 @@ if args.file:
                         pvx = pvx-1 if rev else pvx+1
                 #Turn on the laser
                 step = (args.highpower-args.lowpower)/args.steps
-                if args.debug:
-                    print "Step:" + str(step)
-                    print "Value:" + str(value)
-                    print "Steps:" + str(args.steps)
-                    print "Power:" + str(math.ceil((args.steps-value)*step))
                 laserOn(math.ceil((args.steps-value)*step))
                 #Burn the segment
                 goto = xp - size if rev else xp + size
